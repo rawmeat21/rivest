@@ -149,10 +149,10 @@ func (ad *AccountDatabase) Update(acID string, updateMethod func(a *Account) err
 	// 4
 
 	/*
-	old = cp; has a problem, any code that still points to the account pointed by old would see unmodified data, which is weird, 
-	because the data was just modified. The data has been modified for sure, if the user were to get the account again, they would
-	see the modified data, but right now, the user is looking at an old object which has been unindexed. The fix is to
-	copy all the data in the modified clone's struct, that way user would see an updated view and it will all be consistent.
+		old = cp; has a problem, any code that still points to the account pointed by old would see unmodified data, which is weird,
+		because the data was just modified. The data has been modified for sure, if the user were to get the account again, they would
+		see the modified data, but right now, the user is looking at an old object which has been unindexed. The fix is to
+		copy all the data in the modified clone's struct, that way user would see an updated view and it will all be consistent.
 	*/
 	*old = *cp
 
