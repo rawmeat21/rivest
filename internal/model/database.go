@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"slices"
+	"time"
 )
 
 type identKey struct {
@@ -28,70 +29,18 @@ func NewAccountDatabase() *AccountDatabase {
 }
 
 func (ad *AccountDatabase) Add(a *Account) error {
-	if a == nil || a.ID == "" || len(a.Identifiers) == 0 {
-		return ErrInvalidAccount
-	}
 
-	service := NormalizeService(a.Service)
-
-	if service == "" {
-		return fmt.Errorf("%w: empty service", ErrInvalidAccount)
+	// validate
+	if err := ad.validate(a); err != nil {
+		return err
 	}
 
 	if _, exists := ad.accounts[a.ID]; exists {
-		return fmt.Errorf("%w: An account with the same ID exists", ErrDuplicateID)
+		return fmt.Errorf("%w: %s", ErrDuplicateID, a.ID)
 	}
 
-	seen := make(map[Identifier]bool)
-
-	for _, i := range a.Identifiers {
-
-		if i.Key() == "" {
-			return fmt.Errorf("%w: identifier cannot be empty", ErrInvalidAccount)
-		}
-
-		if seen[NewIdentifier(i.Kind, i.Key())] {
-			return fmt.Errorf("%w: Account contains duplicate identifier(s)", ErrDuplicateIdentifier)
-		}
-
-		// we cannot allow 2 same identifiers (for exact same service) to exist. Identifiers are like
-		// primary keys for accounts in one service's scope, so we need to disallow duplicate identifiers
-		// for one service
-		if _, entry := ad.identOwner[identKey{service, i.Kind, i.Key()}]; entry {
-			return fmt.Errorf("%w: %s", ErrDuplicateIdentifier, i.Value)
-		}
-
-		seen[NewIdentifier(i.Kind, i.Key())] = true
-	}
-
-	fseen := make(map[string]bool)
-	for _, f := range a.Fields {
-
-		name := NormalizeField(f.Name)
-
-		if name == "" {
-			return fmt.Errorf("%w: field name cannot be empty", ErrInvalidAccount)
-		}
-
-		if fseen[name] {
-			return fmt.Errorf("%w: %s", ErrDuplicateField, name)
-		}
-
-		fseen[name] = true
-	}
-
-	ad.accounts[a.ID] = a
-	ad.byService[service] = append(ad.byService[service], a.ID)
-
-	indexed := make(map[string]bool)
-	for _, i := range a.Identifiers {
-		ad.identOwner[identKey{service, i.Kind, i.Key()}] = a.ID
-		if !indexed[i.Key()] {
-			indexed[i.Key()] = true
-			ad.byIdentifierValue[i.Key()] = append(ad.byIdentifierValue[i.Key()], a.ID)
-		}
-	}
-
+	// index
+	ad.index(a)
 	return nil
 }
 
@@ -161,20 +110,154 @@ func (ad *AccountDatabase) FindByServiceAndIdentifier(service string, ident Iden
 	return nil, false
 }
 
-func (ad *AccountDatabase) Update(acID string, updateMethod func(a *Account) error) {
+func (ad *AccountDatabase) Update(acID string, updateMethod func(a *Account) error) error {
+	// create clone, apply update, unindex old account, set old to point to clone, index again
 
+	if updateMethod == nil {
+		return ErrInvalidAccount
+	}
+
+	old, ok := ad.accounts[acID]
+
+	if !ok {
+		return fmt.Errorf("%w: account %s", ErrNotFound, acID)
+	}
+
+	// 1
+	cp := old.clone()
+
+	// 2
+	if err := updateMethod(cp); err != nil {
+		return err
+	}
+
+	// just ensuring updateMethod doesn't change these members
+	cp.ID = old.ID
+	cp.Created = old.Created
+
+	// check if updated account is ok
+	if err := ad.validate(cp); err != nil {
+		return err
+	}
+
+	cp.Updated = time.Now().UTC()
+
+	// 3
+	ad.unindex(old)
+	old.wipe()
+
+	// 4
+
+	/*
+	old = cp; has a problem, any code that still points to the account pointed by old would see unmodified data, which is weird, 
+	because the data was just modified. The data has been modified for sure, if the user were to get the account again, they would
+	see the modified data, but right now, the user is looking at an old object which has been unindexed. The fix is to
+	copy all the data in the modified clone's struct, that way user would see an updated view and it will all be consistent.
+	*/
+	*old = *cp
+
+	// 5
+	ad.index(old)
+	return nil
+}
+
+func (ad *AccountDatabase) Remove(acID string) error {
+	a, ok := ad.accounts[acID]
+	if !ok {
+		return fmt.Errorf("%w: account %s", ErrNotFound, acID)
+	}
+
+	ad.unindex(a)
+	a.wipe()
+	*a = Account{}
+	return nil
 }
 
 func (ad *AccountDatabase) index(a *Account) {
+	service := NormalizeService(a.Service)
+	ad.accounts[a.ID] = a
+	ad.byService[service] = append(ad.byService[service], a.ID)
 
+	indexed := make(map[string]bool)
+	for _, i := range a.Identifiers {
+		ad.identOwner[identKey{service, i.Kind, i.Key()}] = a.ID
+		if !indexed[i.Key()] {
+			indexed[i.Key()] = true
+			ad.byIdentifierValue[i.Key()] = append(ad.byIdentifierValue[i.Key()], a.ID)
+		}
+	}
+}
+
+func removeID(mp map[string][]string, key, id string) {
+
+	mp[key] = slices.DeleteFunc(mp[key], func(x string) bool {
+		return x == id
+	})
+
+	if len(mp[key]) == 0 {
+		delete(mp, key)
+	}
 }
 
 func (ad *AccountDatabase) unindex(a *Account) {
 
+	service := NormalizeService(a.Service)
+	removeID(ad.byService, service, a.ID)
+
+	for _, i := range a.Identifiers {
+		delete(ad.identOwner, identKey{service, i.Kind, i.Key()})
+		removeID(ad.byIdentifierValue, i.Key(), a.ID)
+	}
+	delete(ad.accounts, a.ID)
 }
 
-func (ad *AccountDatabase) validate(a *Account) {
+func (ad *AccountDatabase) validate(a *Account) error {
+	if a == nil || a.ID == "" || len(a.Identifiers) == 0 {
+		return ErrInvalidAccount
+	}
 
+	service := NormalizeService(a.Service)
+
+	if service == "" {
+		return fmt.Errorf("%w: empty service", ErrInvalidAccount)
+	}
+
+	seen := make(map[Identifier]bool)
+
+	for _, i := range a.Identifiers {
+
+		if i.Kind == "" || i.Key() == "" {
+			return fmt.Errorf("%w: identifier cannot be empty", ErrInvalidAccount)
+		}
+
+		if seen[NewIdentifier(i.Kind, i.Key())] {
+			return fmt.Errorf("%w: Account contains duplicate identifier(s)", ErrDuplicateIdentifier)
+		}
+
+		if id, entry := ad.identOwner[identKey{service, i.Kind, i.Key()}]; entry && id != a.ID {
+			return fmt.Errorf("%w: %s", ErrDuplicateIdentifier, i.Value)
+		}
+
+		seen[NewIdentifier(i.Kind, i.Key())] = true
+	}
+
+	fseen := make(map[string]bool)
+	for _, f := range a.Fields {
+
+		name := NormalizeField(f.Name)
+
+		if name == "" {
+			return fmt.Errorf("%w: field name cannot be empty", ErrInvalidAccount)
+		}
+
+		if fseen[name] {
+			return fmt.Errorf("%w: %s", ErrDuplicateField, name)
+		}
+
+		fseen[name] = true
+	}
+
+	return nil
 }
 
 // func (ad *AccountDatabase) SuggestServices(prefix string) []string {

@@ -232,3 +232,9 @@ func (a *Account) clone() *Account {
 
 	return &c
 }
+
+func (a *Account) wipe() {
+	for idx := range a.Fields {
+		clear(a.Fields[idx].Value)
+	}
+}
