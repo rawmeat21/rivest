@@ -161,7 +161,21 @@ func (ad *AccountDatabase) FindByServiceAndIdentifier(service string, ident Iden
 	return nil, false
 }
 
+func (ad *AccountDatabase) Update(acID string, updateMethod func(a *Account) error) {
 
+}
+
+func (ad *AccountDatabase) index(a *Account) {
+
+}
+
+func (ad *AccountDatabase) unindex(a *Account) {
+
+}
+
+func (ad *AccountDatabase) validate(a *Account) {
+
+}
 
 // func (ad *AccountDatabase) SuggestServices(prefix string) []string {
 
