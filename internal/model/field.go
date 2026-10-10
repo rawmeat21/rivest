@@ -9,9 +9,9 @@ Can be encrypted and stored.
 */
 
 type Field struct {
-	Name        string
-	Value       []byte
-	IsEncrypted bool
+	Name        string `json:"name"`
+	Value       []byte `json:"value"`
+	IsEncrypted bool `json:"encrypted"`
 }
 
 func NewField(name string, value []byte, isEncrypted bool) Field {

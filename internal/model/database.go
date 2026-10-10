@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -263,3 +264,21 @@ func (ad *AccountDatabase) validate(a *Account) error {
 // func (ad *AccountDatabase) SuggestServices(prefix string) []string {
 
 // }
+
+func (ad *AccountDatabase) All() []*Account {
+	list := make([]*Account, 0, len(ad.accounts))
+
+	for _, a := range ad.accounts {
+		list = append(list, a)
+	}
+
+	slices.SortFunc(list, func(x *Account, y *Account) int {
+		if c:= x.Created.Compare(y.Created); c != 0 {
+			return c
+		}
+
+		return strings.Compare(x.ID, y.ID)
+	})
+
+	return list
+}
