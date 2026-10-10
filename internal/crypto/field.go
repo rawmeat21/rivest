@@ -16,7 +16,7 @@ func fieldKey(dek []byte, accountID, fieldName string) ([]byte, error) {
 	}
 
 	if accountID == "" || fieldName == "" {
-		return nil, fmt.Errorf("%w: account ID and field name are required", ErrBadInput)
+		return nil, fmt.Errorf("%w: account ID or field name is empty", ErrBadInput)
 	}
 
 	info := "rivest/field/v1\x00" + accountID + "\x00" + fieldName
@@ -31,7 +31,7 @@ func fieldKey(dek []byte, accountID, fieldName string) ([]byte, error) {
 	return key, nil
 }
 
-// label that pins a sealed value to its account and field name
+// associated data for a field
 func fieldAAD(accountID, fieldName string) []byte {
 
 	return []byte(accountID + "\x00" + fieldName)
@@ -53,6 +53,7 @@ func SealField(dek []byte, accountID, fieldName string, plaintext []byte) ([]byt
 func OpenField(dek []byte, accountID, fieldName string, sealed []byte) ([]byte, error) {
 
 	key, err := fieldKey(dek, accountID, fieldName)
+	
 	if err != nil {
 		return nil, err
 	}

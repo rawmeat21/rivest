@@ -1,6 +1,6 @@
 package crypto
 
-// authenticated encryption
+// authenticated encryption with associated data
 
 /*
 scrambles the data and attaches a tag
@@ -26,8 +26,13 @@ func newAEAD(key []byte) (cipher.AEAD, error) {
 	return chacha20poly1305.NewX(key)
 }
 
-// seal locks plaintext. Result: nonce, scrambled data, tag
+// seal locks plaintext
 func seal(key, plaintext, aad []byte) ([]byte, error) {
+
+	/*
+	output=nonce+scrambled plaintext+tag=24+x+16=40+x bytes (x = number of bytes in plaintext)
+	*/
+
 	aead, err := newAEAD(key)
 
 	if err != nil {
@@ -35,42 +40,49 @@ func seal(key, plaintext, aad []byte) ([]byte, error) {
 	}
 
 	/*
-
-		nonce is 24 random bytes made for every locking.
-		It ensures that locking the same secret twice gives different results.
-		The same key and nonce must never be reused.
-
+	nonce is 24 random bytes made for every locking.
+	It ensures that locking the same secret twice gives different results.
+	The same key and nonce must never be reused.
 	*/
 
-	nonce, err := randomBytes(aead.NonceSize())
+	nonce, err := randomBytes(aead.NonceSize()) // aead.NonceSize() will return 24 for ChaCha20-Poly1305
 
 	if err != nil {
 		return nil, err
 	}
-
+	// aead.Overhead() should be 16 = tag size
 	out := make([]byte, 0, len(nonce)+len(plaintext)+aead.Overhead())
-	out = append(out, nonce...) // basically out+=nonce
+	out = append(out, nonce...) // basically out=nonce
 
-	return aead.Seal(out, nonce, plaintext, aad), nil
+	return aead.Seal(out, nonce, plaintext, aad), nil 
 }
 
 // open() unlocks what seal() 's output
 func open(key, sealed, aad []byte) ([]byte, error) {
+
+	// the aad and key need to be the same
 
 	aead, err := newAEAD(key)
 	if err != nil {
 		return nil, err
 	}
 
+	
 	if len(sealed) < aead.NonceSize()+aead.Overhead() {
 		return nil, ErrDecrypt
 	}
 
-	nonce := sealed[:aead.NonceSize()] // get nonce
-	ciphertext := sealed[aead.NonceSize():]
+	nonce := sealed[:aead.NonceSize()] // get nonce by reading the first 24 bytes
+	ciphertext := sealed[aead.NonceSize():] // this is technically ciphertext+tag
 
 	plaintext, err := aead.Open(nil, nonce, ciphertext, aad)
+
 	if err != nil {
+
+		/*
+		could mean: bad nonce, bad key, bad aad, etc.
+		*/
+
 		return nil, ErrDecrypt
 	}
 

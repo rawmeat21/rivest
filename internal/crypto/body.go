@@ -10,7 +10,7 @@ import (
 )
 
 
-// wrapped DEK= nonce+key+tag = 24+32+16 = 72bytes
+// wrapped DEK=nonce+key+tag=24+32+16=72bytes
 const WrappedDEKSize = chacha20poly1305.NonceSizeX + KeySize + chacha20poly1305.Overhead
 
 func bodyKey(dek []byte) ([]byte, error) {
@@ -25,6 +25,7 @@ func bodyKey(dek []byte) ([]byte, error) {
 	if _, err := io.ReadFull(reader, key); err != nil {
 		return nil, err
 	}
+	
 	return key, nil
 }
 
