@@ -14,10 +14,10 @@ type Field struct {
 	IsEncrypted bool
 }
 
-func NewField(name string, value []byte, IsEncrypted bool) Field {
+func NewField(name string, value []byte, isEncrypted bool) Field {
 	return Field{
-		Name: name,
-		Value: value,
-		IsEncrypted: IsEncrypted,
+		Name:        name,
+		Value:       value,
+		IsEncrypted: isEncrypted,
 	}
 }
