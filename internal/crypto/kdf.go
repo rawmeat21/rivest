@@ -12,13 +12,13 @@ import (
 
 /*
 
-Argon2 fills a large array of 1 KiB blocks, 
-then computes each block from earlier ones in a pattern that depends on the data. 
+Argon2 fills a large array of 1 KiB blocks,
+then computes each block from earlier ones in a pattern that depends on the data.
 64*1024 KiB means 65,536 blocks, or 64 MiB, per derivation.
 
 Time is the number of passes over the whole memory array. Each pass rewrites every block.
 
-Threads - The memory array is split into this many independent lanes, which can be computed in parallel 
+Threads - The memory array is split into this many independent lanes, which can be computed in parallel
 
 
 Different values of any of the three produce a different key, even with the same password and salt
@@ -59,7 +59,7 @@ func DeriveKEK(password, secretKey, salt []byte, p KDFParams) ([]byte, error) {
 	*/
 
 	/*
-	pass in the master password in password field
+		pass in the master password in password field
 	*/
 
 	if err := p.Validate(); err != nil {
@@ -71,7 +71,7 @@ func DeriveKEK(password, secretKey, salt []byte, p KDFParams) ([]byte, error) {
 	}
 
 	/*
-	SecretKeySize and SaltSize are 16
+		SecretKeySize and SaltSize are 16
 	*/
 
 	if len(secretKey) != SecretKeySize || len(salt) != SaltSize {

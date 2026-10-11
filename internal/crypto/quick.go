@@ -12,7 +12,7 @@ import (
 func DeriveQuickKey(unlock []byte, deviceSecret []byte, salt []byte, p KDFParams) ([]byte, error) {
 	// creates a quick key, a key which can be used for quick logins
 	// this key is responsible for encrypting and decrypting the DEK
-	
+
 	if err := p.Validate(); err != nil {
 		return nil, err
 	}
@@ -21,7 +21,7 @@ func DeriveQuickKey(unlock []byte, deviceSecret []byte, salt []byte, p KDFParams
 		return nil, fmt.Errorf("%w: wrong device secret or salt length", ErrBadInput)
 	}
 
-	mixed := make([]byte, 0, 2 * KeySize)
+	mixed := make([]byte, 0, 2*KeySize)
 
 	if len(unlock) > 0 {
 		slow := argon2.IDKey(unlock, salt, p.Time, p.MemoryKiB, p.Threads, KeySize) // 32bytes
@@ -30,7 +30,6 @@ func DeriveQuickKey(unlock []byte, deviceSecret []byte, salt []byte, p KDFParams
 	}
 	mixed = append(mixed, deviceSecret...)
 	defer clear(deviceSecret)
-
 
 	key := make([]byte, KeySize)
 
@@ -43,4 +42,3 @@ func DeriveQuickKey(unlock []byte, deviceSecret []byte, salt []byte, p KDFParams
 
 	return key, nil
 }
-

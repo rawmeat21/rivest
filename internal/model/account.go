@@ -9,12 +9,12 @@ import (
 )
 
 type Account struct {
-	ID          string `json:"id"` 
-	Service     string `json:"service"`
+	ID          string       `json:"id"`
+	Service     string       `json:"service"`
 	Identifiers []Identifier `json:"identifiers"`
-	Fields      []Field `json:"fields"`
-	Created     time.Time `json:"created"`
-	Updated     time.Time `json:"updated"`
+	Fields      []Field      `json:"fields"`
+	Created     time.Time    `json:"created"`
+	Updated     time.Time    `json:"updated"`
 }
 
 func NewAccount(service string, identifiers []Identifier, fields []Field) (*Account, error) {

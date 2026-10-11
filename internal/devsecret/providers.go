@@ -13,7 +13,6 @@ import (
 	"github.com/zalando/go-keyring"
 )
 
-
 const (
 	keyringService = "rivest"
 	keyringUser    = "device-secret"
@@ -30,7 +29,7 @@ func decode(text string) ([]byte, error) {
 
 // the OS keyring provider object
 
-type Keyring struct{} 
+type Keyring struct{}
 
 func (Keyring) Backend() uint8 {
 	return BackendKeyring
@@ -66,8 +65,7 @@ func (Keyring) Delete() error {
 	return nil
 }
 
-
-type File struct{
+type File struct {
 	Path string
 }
 

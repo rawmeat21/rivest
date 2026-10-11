@@ -9,7 +9,6 @@ import (
 	"golang.org/x/crypto/hkdf"
 )
 
-
 // wrapped DEK=nonce+key+tag=24+32+16=72bytes
 const WrappedDEKSize = chacha20poly1305.NonceSizeX + KeySize + chacha20poly1305.Overhead
 
@@ -25,7 +24,7 @@ func bodyKey(dek []byte) ([]byte, error) {
 	if _, err := io.ReadFull(reader, key); err != nil {
 		return nil, err
 	}
-	
+
 	return key, nil
 }
 
@@ -46,7 +45,7 @@ func OpenBody(dek, sealed, aad []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	defer clear(key)
 	return open(key, sealed, aad)
 }

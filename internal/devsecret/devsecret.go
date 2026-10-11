@@ -10,20 +10,18 @@ import (
 
 const Size = 32
 
-
 const (
 	// these denote which Backend service is being used to store the device secret, an OS keyring or a file
 	BackendKeyring uint8 = 1
-	BackendFile uint8 = 2
-
+	BackendFile    uint8 = 2
 
 	BackendPlatform uint8 = 3
 )
 
-// provides a backend service to 
+// provides a backend service to
 type Provider interface {
 	Backend() uint8
-	Load() ([]byte,error)
+	Load() ([]byte, error)
 	Save(secret []byte) error
 	Delete() error
 }

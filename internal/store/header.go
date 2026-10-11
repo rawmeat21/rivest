@@ -10,7 +10,7 @@ import (
 
 const (
 	formatVersion = 1
-	headerLen     = 113 
+	headerLen     = 113
 	prefixLen     = 33
 )
 
@@ -19,7 +19,7 @@ var magic = [6]byte{'R', 'I', 'V', 'E', 'S', 'T'}
 type Header struct {
 	Magic      [6]byte
 	Version    uint16
-	Time       uint32 
+	Time       uint32
 	MemoryKiB  uint32
 	Threads    uint8
 	Salt       [crypto.SaltSize]byte
@@ -61,7 +61,7 @@ func (h *Header) marshal() []byte {
 	var buf bytes.Buffer
 
 	if err := binary.Write(&buf, binary.BigEndian, h); err != nil {
-		panic(err) 
+		panic(err)
 	}
 
 	return buf.Bytes()
@@ -93,4 +93,3 @@ func parseHeader(data []byte) (*Header, error) {
 
 	return &h, nil
 }
-

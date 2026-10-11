@@ -21,8 +21,8 @@ const (
 )
 
 type Identifier struct {
-	Kind  IdentifierKind `json:"kind"`// kind of identifier: can be email, phone number, username or custom identifier
-	Value string         `json:"value"`// value of the identifier.
+	Kind  IdentifierKind `json:"kind"`  // kind of identifier: can be email, phone number, username or custom identifier
+	Value string         `json:"value"` // value of the identifier.
 }
 
 func NewIdentifier(kind IdentifierKind, value string) Identifier {

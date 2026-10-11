@@ -30,7 +30,7 @@ func newAEAD(key []byte) (cipher.AEAD, error) {
 func seal(key, plaintext, aad []byte) ([]byte, error) {
 
 	/*
-	output=nonce+scrambled plaintext+tag=24+x+16=40+x bytes (x = number of bytes in plaintext)
+		output=nonce+scrambled plaintext+tag=24+x+16=40+x bytes (x = number of bytes in plaintext)
 	*/
 
 	aead, err := newAEAD(key)
@@ -40,9 +40,9 @@ func seal(key, plaintext, aad []byte) ([]byte, error) {
 	}
 
 	/*
-	nonce is 24 random bytes made for every locking.
-	It ensures that locking the same secret twice gives different results.
-	The same key and nonce must never be reused.
+		nonce is 24 random bytes made for every locking.
+		It ensures that locking the same secret twice gives different results.
+		The same key and nonce must never be reused.
 	*/
 
 	nonce, err := RandomBytes(aead.NonceSize()) // aead.NonceSize() will return 24 for ChaCha20-Poly1305
@@ -56,7 +56,7 @@ func seal(key, plaintext, aad []byte) ([]byte, error) {
 
 	// (key, nonce, plaintext, aad) -> |nonce|ciphertext|tag|
 
-	return aead.Seal(out, nonce, plaintext, aad), nil 
+	return aead.Seal(out, nonce, plaintext, aad), nil
 }
 
 // open() unlocks seal()'s output
@@ -69,12 +69,11 @@ func open(key, sealed, aad []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	
 	if len(sealed) < aead.NonceSize()+aead.Overhead() {
 		return nil, ErrDecrypt
 	}
 
-	nonce := sealed[:aead.NonceSize()] // get nonce by reading the first 24 bytes
+	nonce := sealed[:aead.NonceSize()]      // get nonce by reading the first 24 bytes
 	ciphertext := sealed[aead.NonceSize():] // this is technically ciphertext+tag
 
 	// (key, nonce, ciphertext+tag, aad) -> plaintext (x bytes)
@@ -83,7 +82,7 @@ func open(key, sealed, aad []byte) ([]byte, error) {
 	if err != nil {
 
 		/*
-		could mean: bad nonce, bad key, bad aad, etc.
+			could mean: bad nonce, bad key, bad aad, etc.
 		*/
 
 		return nil, ErrDecrypt

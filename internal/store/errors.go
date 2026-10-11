@@ -8,5 +8,3 @@ var (
 	ErrCorrupt            = errors.New("vault contents are damaged")
 	ErrExists             = errors.New("a vault already exists at this path")
 )
-
-

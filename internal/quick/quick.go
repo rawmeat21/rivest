@@ -26,23 +26,23 @@ var magic = [6]byte{'R', 'I', 'V', 'Q', 'K', '1'}
 
 // 107 bytes
 type file struct {
-	Magic      [6]byte // 6
-	Backend    uint8 // 1
-	Mode       uint8 // 1
-	MaxTries   uint8 // 1
-	Time       uint32 // 4
-	MemoryKiB  uint32 // 4
-	Threads    uint8 // 1
-	Salt       [crypto.SaltSize]byte // 16
+	Magic      [6]byte                     // 6
+	Backend    uint8                       // 1
+	Mode       uint8                       // 1
+	MaxTries   uint8                       // 1
+	Time       uint32                      // 4
+	MemoryKiB  uint32                      // 4
+	Threads    uint8                       // 1
+	Salt       [crypto.SaltSize]byte       // 16
 	WrappedDEK [crypto.WrappedDEKSize]byte // 72
-	Tries      uint8 // 1
+	Tries      uint8                       // 1
 }
 
 func (f *file) params() crypto.KDFParams {
 	return crypto.KDFParams{
-		Time: f.Time,
+		Time:      f.Time,
 		MemoryKiB: f.MemoryKiB,
-		Threads: f.Threads,	
+		Threads:   f.Threads,
 	}
 }
 
@@ -52,7 +52,7 @@ func (f *file) marshal() []byte {
 	var buf bytes.Buffer
 
 	if err := binary.Write(&buf, binary.BigEndian, f); err != nil {
-		panic(err) 
+		panic(err)
 	}
 
 	return buf.Bytes()
@@ -88,7 +88,7 @@ func read(path string) (*file, error) {
 
 func Create(path string, dek, unlock, deviceSecret []byte, backend, maxTries uint8) error {
 
-	if maxTries == 0{
+	if maxTries == 0 {
 		maxTries = DefaultMaxTries
 	}
 
@@ -101,12 +101,12 @@ func Create(path string, dek, unlock, deviceSecret []byte, backend, maxTries uin
 	params := crypto.DefaultKDFParams
 
 	f := file{
-		Magic: magic,
-		Backend: backend,
-		MaxTries: maxTries,
-		Time: params.Time,
+		Magic:     magic,
+		Backend:   backend,
+		MaxTries:  maxTries,
+		Time:      params.Time,
 		MemoryKiB: params.MemoryKiB,
-		Threads: params.Threads,
+		Threads:   params.Threads,
 	}
 
 	if len(unlock) > 0 {
@@ -156,7 +156,7 @@ func Unlock(path string, unlock, deviceSecret []byte) ([]byte, error) {
 	if f.Mode == ModeUnlockSecret && len(unlock) == 0 {
 		return nil, ErrNeedSecret // not a real guess, so it doesn't count
 	}
-	
+
 	if len(deviceSecret) != crypto.KeySize {
 		return nil, fmt.Errorf("%w: bad device secret", crypto.ErrBadInput)
 	}
@@ -167,16 +167,13 @@ func Unlock(path string, unlock, deviceSecret []byte) ([]byte, error) {
 		return nil, err
 	}
 
-
 	key, err := crypto.DeriveQuickKey(unlock, deviceSecret, f.Salt[:], f.params())
 	if err != nil {
 		return nil, err
 	}
 	defer crypto.Wipe(key)
 
-
 	dek, err := crypto.UnwrapDEK(key, f.WrappedDEK[:], f.marshal()[:prefixLen])
-
 
 	if err != nil {
 		if f.Tries >= f.MaxTries {
@@ -192,7 +189,7 @@ func Unlock(path string, unlock, deviceSecret []byte) ([]byte, error) {
 		crypto.Wipe(dek)
 		return nil, err
 	}
-	
+
 	return dek, nil
 }
 
@@ -203,5 +200,3 @@ func Remove(path string) error {
 	}
 	return nil
 }
-
-

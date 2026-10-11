@@ -14,9 +14,9 @@ import (
 
 // a vault is a file which stores information about all accounts of the user
 type Vault struct {
-	path   string // where is the vault file
-	header Header // header (see header.go for information about what a header contains)
-	dek    []byte // 32 byte key, use to derive other keys
+	path   string                 // where is the vault file
+	header Header                 // header (see header.go for information about what a header contains)
+	dek    []byte                 // 32 byte key, use to derive other keys
 	DB     *model.AccountDatabase // the database which holds our accounts
 }
 
@@ -103,8 +103,6 @@ func load(path string, data []byte, h *Header, dek []byte) (*Vault, error) {
 	return &Vault{path: path, header: *h, dek: dek, DB: db}, nil
 }
 
-
-
 // unlocks a vault file
 func Open(path string, password, secretKey []byte) (*Vault, error) {
 
@@ -149,7 +147,7 @@ func OpenWithDEK(path string, dek []byte) (*Vault, error) {
 	return load(path, data, h, dek)
 }
 
-func (v *Vault) ExportDEK() ([]byte) {
+func (v *Vault) ExportDEK() []byte {
 	return slices.Clone(v.dek)
 }
 
@@ -183,7 +181,6 @@ func (v *Vault) Close() {
 	crypto.Wipe(v.dek)
 	v.dek = nil
 }
-
 
 func (v *Vault) SealField(accountID, fieldName string, plaintext []byte) ([]byte, error) {
 	return crypto.SealField(v.dek, accountID, fieldName, plaintext)

@@ -273,7 +273,7 @@ func (ad *AccountDatabase) All() []*Account {
 	}
 
 	slices.SortFunc(list, func(x *Account, y *Account) int {
-		if c:= x.Created.Compare(y.Created); c != 0 {
+		if c := x.Created.Compare(y.Created); c != 0 {
 			return c
 		}
 
