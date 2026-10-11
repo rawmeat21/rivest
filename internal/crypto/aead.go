@@ -3,6 +3,7 @@ package crypto
 // authenticated encryption with associated data
 
 /*
+
 scrambles the data and attaches a tag
 
 The tag is a fingerprint that only someone with the right key can produce.
@@ -18,7 +19,6 @@ import (
 )
 
 func newAEAD(key []byte) (cipher.AEAD, error) {
-
 	if len(key) != KeySize {
 		return nil, fmt.Errorf("%w: key must be %d bytes", ErrBadInput, KeySize)
 	}
@@ -45,7 +45,7 @@ func seal(key, plaintext, aad []byte) ([]byte, error) {
 	The same key and nonce must never be reused.
 	*/
 
-	nonce, err := randomBytes(aead.NonceSize()) // aead.NonceSize() will return 24 for ChaCha20-Poly1305
+	nonce, err := RandomBytes(aead.NonceSize()) // aead.NonceSize() will return 24 for ChaCha20-Poly1305
 
 	if err != nil {
 		return nil, err
@@ -54,10 +54,12 @@ func seal(key, plaintext, aad []byte) ([]byte, error) {
 	out := make([]byte, 0, len(nonce)+len(plaintext)+aead.Overhead())
 	out = append(out, nonce...) // basically out=nonce
 
+	// (key, nonce, plaintext, aad) -> |nonce|ciphertext|tag|
+
 	return aead.Seal(out, nonce, plaintext, aad), nil 
 }
 
-// open() unlocks what seal() 's output
+// open() unlocks seal()'s output
 func open(key, sealed, aad []byte) ([]byte, error) {
 
 	// the aad and key need to be the same
@@ -75,6 +77,7 @@ func open(key, sealed, aad []byte) ([]byte, error) {
 	nonce := sealed[:aead.NonceSize()] // get nonce by reading the first 24 bytes
 	ciphertext := sealed[aead.NonceSize():] // this is technically ciphertext+tag
 
+	// (key, nonce, ciphertext+tag, aad) -> plaintext (x bytes)
 	plaintext, err := aead.Open(nil, nonce, ciphertext, aad)
 
 	if err != nil {

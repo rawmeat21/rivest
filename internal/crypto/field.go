@@ -33,13 +33,12 @@ func fieldKey(dek []byte, accountID, fieldName string) ([]byte, error) {
 
 // associated data for a field
 func fieldAAD(accountID, fieldName string) []byte {
-
 	return []byte(accountID + "\x00" + fieldName)
 }
 
 func SealField(dek []byte, accountID, fieldName string, plaintext []byte) ([]byte, error) {
 
-	key, err := fieldKey(dek, accountID, fieldName) // generate key for the field name
+	key, err := fieldKey(dek, accountID, fieldName) // generate key for the field name, note that its different for each field of each account
 
 	if err != nil {
 		return nil, err
@@ -53,7 +52,7 @@ func SealField(dek []byte, accountID, fieldName string, plaintext []byte) ([]byt
 func OpenField(dek []byte, accountID, fieldName string, sealed []byte) ([]byte, error) {
 
 	key, err := fieldKey(dek, accountID, fieldName)
-	
+
 	if err != nil {
 		return nil, err
 	}

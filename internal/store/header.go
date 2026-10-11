@@ -16,7 +16,6 @@ const (
 
 var magic = [6]byte{'R', 'I', 'V', 'E', 'S', 'T'}
 
-// Every field has a fixed size, so the header is always exactly 113 bytes.
 type Header struct {
 	Magic      [6]byte
 	Version    uint16
@@ -58,10 +57,11 @@ func (h *Header) params() crypto.KDFParams {
 
 func (h *Header) marshal() []byte {
 
+	// convert header -> 113bytes binary
 	var buf bytes.Buffer
 
 	if err := binary.Write(&buf, binary.BigEndian, h); err != nil {
-		panic(err) // cannot fail: fixed-size data written to memory
+		panic(err) 
 	}
 
 	return buf.Bytes()

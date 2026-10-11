@@ -23,6 +23,5 @@ func UnwrapDEK(kek, wrapped, aad []byte) ([]byte, error) {
 		Wipe(dek)
 		return nil, ErrDecrypt
 	}
-
 	return dek, nil
 }

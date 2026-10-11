@@ -22,7 +22,7 @@ Threads - The memory array is split into this many independent lanes, which can 
 
 
 Different values of any of the three produce a different key, even with the same password and salt
-To rederive the KEK, we must use the same tuple of parameters
+To rederive the KEK, we must use the same tuple of parameters!
 
 */
 
@@ -90,13 +90,13 @@ func DeriveKEK(password, secretKey, salt []byte, p KDFParams) ([]byte, error) {
 
 	kek := make([]byte, KeySize) // kek is 32bytes
 
-	// kek = hkdf(mixed+label "rivest/kek/v1")
-	// sha256 is the scrambling function
+	// kek = hkdf(argon2 hashed password+secret key+label "rivest/kek/v1")
+	// sha256 is the hash function
 	reader := hkdf.New(sha256.New, mixed, nil, []byte("rivest/kek/v1"))
 
 	if _, err := io.ReadFull(reader, kek); err != nil {
 		return nil, err
 	}
 
-	return kek, nil
+	return kek, nil // 32 byte key returned
 }

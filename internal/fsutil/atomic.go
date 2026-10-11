@@ -1,4 +1,4 @@
-package store
+package fsutil
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 
 // replaces gievn path with data. If anything fails midway, the old
 // file is restored
-func writeFileAtomic(path string, data []byte) error {
+func WriteFileAtomic(path string, data []byte) error {
 	dir := filepath.Dir(path)
 
 	tmp, err := os.CreateTemp(dir, ".rivest-*.tmp")
