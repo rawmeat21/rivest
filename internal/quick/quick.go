@@ -10,6 +10,7 @@ import (
 
 	"github.com/rawmeat21/rivest/internal/crypto"
 	"github.com/rawmeat21/rivest/internal/fsutil"
+	"github.com/rawmeat21/rivest/internal/devsecret"
 )
 
 const (
@@ -88,6 +89,10 @@ func read(path string) (*file, error) {
 
 func Create(path string, dek, unlock, deviceSecret []byte, backend, maxTries uint8) error {
 
+	if !Allowed(backend) {
+		return ErrBackendNotAllowed
+	}
+
 	if maxTries == 0 {
 		maxTries = DefaultMaxTries
 	}
@@ -154,7 +159,7 @@ func Unlock(path string, unlock, deviceSecret []byte) ([]byte, error) {
 	}
 
 	if f.Mode == ModeUnlockSecret && len(unlock) == 0 {
-		return nil, ErrNeedSecret // not a real guess, so it doesn't count
+		return nil, ErrNeedSecret
 	}
 
 	if len(deviceSecret) != crypto.KeySize {
@@ -183,7 +188,7 @@ func Unlock(path string, unlock, deviceSecret []byte) ([]byte, error) {
 		return nil, ErrWrongSecret
 	}
 
-	f.Tries = 0 // success: reset the counter
+	f.Tries = 0 // reset counter on success
 
 	if err := fsutil.WriteFileAtomic(path, f.marshal()); err != nil {
 		crypto.Wipe(dek)
@@ -199,4 +204,9 @@ func Remove(path string) error {
 		return err
 	}
 	return nil
+}
+
+
+func Allowed(backend uint8) bool {
+	return backend == devsecret.BackendKeyring || backend == devsecret.BackendPlatform
 }

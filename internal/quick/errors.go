@@ -8,4 +8,5 @@ var (
 	ErrWrongSecret   = errors.New("wrong unlock secret")
 	ErrTooManyTries  = errors.New("too many wrong attempts: quick unlock was disabled, use the master password")
 	ErrBadFile       = errors.New("quick-unlock file is damaged")
+	ErrBackendNotAllowed = errors.New("quick unlock needs the OS keyring: it is not allowed with the file-based device secret")
 )

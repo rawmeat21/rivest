@@ -10,6 +10,7 @@ import (
 	"github.com/rawmeat21/rivest/internal/crypto"
 	"github.com/rawmeat21/rivest/internal/fsutil"
 	"github.com/rawmeat21/rivest/internal/model"
+	"github.com/rawmeat21/rivest/internal/gate"
 )
 
 // a vault is a file which stores information about all accounts of the user
@@ -18,12 +19,20 @@ type Vault struct {
 	header Header                 // header (see header.go for information about what a header contains)
 	dek    []byte                 // 32 byte key, use to derive other keys
 	DB     *model.AccountDatabase // the database which holds our accounts
+	Settings Settings
 }
 
 // what gets encrypted into the file body
 type contents struct {
 	Accounts []*model.Account `json:"accounts"` // all our accounts
+	Settings Settings         `json:"settings"`
 }
+
+type Settings struct {
+	Gate gate.Config `json:"gate"`
+}
+
+
 
 // create a new vault file
 func Create(path string, password, secretKey []byte) (*Vault, error) {
@@ -100,7 +109,7 @@ func load(path string, data []byte, h *Header, dek []byte) (*Vault, error) {
 		}
 	}
 
-	return &Vault{path: path, header: *h, dek: dek, DB: db}, nil
+	return &Vault{path: path, header: *h, dek: dek, DB: db, Settings: c.Settings}, nil
 }
 
 // unlocks a vault file
@@ -153,7 +162,7 @@ func (v *Vault) ExportDEK() []byte {
 
 // Save writes the current accounts to disk.
 func (v *Vault) Save() error {
-	plain, err := json.Marshal(contents{Accounts: v.DB.All()})
+	plain, err := json.Marshal(contents{Accounts: v.DB.All(), Settings: v.Settings})
 	if err != nil {
 		return err
 	}
